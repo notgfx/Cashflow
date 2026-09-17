@@ -1,0 +1,23 @@
+{
+  "id": 10000,
+  "type": "donation",
+  "status": "success",
+  "currency": "RUB",
+  "sum": "10000.00",
+  "profit": "522.00",
+  "to_cash": "9358.00",
+  "to_pay": "10000.00",
+  "commission": "642.00",
+  "comment": "Демонстрационный платёж",
+  "created_at": "2026-09-17 12:00:00",
+  "vars": {
+    "ik_am_t": "payway",
+    "payment_system": "fsbp",
+    "commission_by_user": false,
+    "bonus_to_referrer": "58.00",
+    "coupon_discount": "58.00"
+  },
+  "hidden": {
+    "AMOUNT": "10000"
+  }
+}

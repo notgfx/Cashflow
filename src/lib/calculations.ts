@@ -1,0 +1,207 @@
+import type { ManualInputs, PaymentCalculation, PayerRole } from "@/types/payment";
+
+export const ACQUIRER_RATES: Record<string, number> = {
+  fsbp: 0.012,
+  fcard: 0.032,
+  fcardusd: 0.085,
+  fusdt: 0,
+  fethereum: 0,
+  flitecoin: 0,
+  fbitcoin: 0,
+  ffreekassa: 0,
+  dppaypal: 0,
+};
+
+export const FX_PAYMENT_SYSTEMS = new Set([
+  "fcardusd",
+  "fusdt",
+  "fethereum",
+  "flitecoin",
+  "fbitcoin",
+]);
+
+export const SHARE_BUCKETS = [0, 10, 20, 25, 50, 79] as const;
+
+const INTL_CARD_PP = 10;
+const SENDER_NO_PROMO_PP = 1;
+
+export function moneyRound(value: number): number {
+  return Math.round((value + 1e-12) * 100) / 100;
+}
+
+export function snapSharePct(raw: number, bucketTol = 1.5): number {
+  if (!Number.isFinite(raw) || raw <= 0.5) return 0;
+  const best = SHARE_BUCKETS.reduce((acc, bucket) =>
+    Math.abs(bucket - raw) < Math.abs(acc - raw) ? bucket : acc,
+  );
+  if (Math.abs(best - raw) <= bucketTol) return best;
+  return Math.round(raw * 10) / 10;
+}
+
+export function autoStyling(sum: number): number {
+  if (sum <= 0) return 0;
+  return Math.min(Math.max(sum * 0.1, 10), 5000);
+}
+
+export function resolveStyling(inputs: ManualInputs): number {
+  if (inputs.stylingMode === "off") return 0;
+  if (inputs.stylingMode === "auto") return autoStyling(inputs.sum);
+  return inputs.stylingCustom || 0;
+}
+
+export function calculateToPay(params: {
+  sum: number;
+  styling: number;
+  serviceCharge: number;
+  payer: PayerRole;
+}): number {
+  const { sum, styling, serviceCharge, payer } = params;
+  return payer === "sender" ? sum + serviceCharge + styling : sum + styling;
+}
+
+export function calculateServiceCharge(sum: number, chargePct: number): number {
+  return sum * (chargePct / 100);
+}
+
+export function calculateGross(serviceCharge: number, styling: number): number {
+  return serviceCharge + styling;
+}
+
+export function calculateAcquirer(params: {
+  toPay: number;
+  paymentSystem: string;
+  sum: number;
+  serviceCharge: number;
+  currenciesDiffer: boolean;
+}): { amount: number; rate: number; fromRubGross: boolean } {
+  const rate = ACQUIRER_RATES[params.paymentSystem] ?? 0;
+  const usdCard = params.paymentSystem === "fcardusd";
+
+  // TODO: confirm exact business formula when «к оплате» is not in RUB.
+  // For foreign cards the raw amount is often USD; model uses 8.5% of RUB gross.
+  if (usdCard && params.currenciesDiffer) {
+    const rubGross = params.sum + params.serviceCharge;
+    return { amount: rubGross * rate, rate, fromRubGross: true };
+  }
+
+  return { amount: params.toPay * rate, rate, fromRubGross: false };
+}
+
+export function calculateMargin(gross: number, acquirer: number): number {
+  return gross - acquirer;
+}
+
+export function calculateCoupon(margin: number, couponPct: number): number {
+  return margin * (couponPct / 100);
+}
+
+export function calculateReferral(margin: number, bonusPct: number): number {
+  return margin * (bonusPct / 100);
+}
+
+export function calculateCommission(serviceCharge: number, coupon: number): number {
+  return serviceCharge - coupon;
+}
+
+export function calculateProfit(margin: number, coupon: number): number {
+  return margin - coupon;
+}
+
+export function calculateToCash(params: {
+  sum: number;
+  coupon: number;
+  commission: number;
+  payer: PayerRole;
+}): number {
+  return params.payer === "sender"
+    ? params.sum + params.coupon
+    : params.sum - params.commission;
+}
+
+export function calculatePayment(
+  inputs: ManualInputs,
+  options?: { currenciesDiffer?: boolean },
+): PaymentCalculation {
+  const sum = inputs.sum || 0;
+  const styling = resolveStyling(inputs);
+  const ps = inputs.paymentSystem || "";
+  const usdCard = ps === "fcardusd";
+  const couponPctIn = inputs.couponPct || 0;
+  const bonusPctIn = inputs.bonusPct || 0;
+  const couponPct = usdCard ? 0 : couponPctIn;
+  const bonusPct = usdCard ? 0 : bonusPctIn;
+  const sender = inputs.payer === "sender";
+  const senderPlus1 = sender && couponPct <= 0 && bonusPct <= 0;
+  const intlPp = usdCard ? INTL_CARD_PP : 0;
+  const chargePct = (inputs.tariff || 0) + intlPp + (senderPlus1 ? SENDER_NO_PROMO_PP : 0);
+  const serviceCharge = calculateServiceCharge(sum, chargePct);
+  const toPay = calculateToPay({
+    sum,
+    styling,
+    serviceCharge,
+    payer: inputs.payer,
+  });
+  const acquirerCalc = calculateAcquirer({
+    toPay,
+    paymentSystem: ps,
+    sum,
+    serviceCharge,
+    currenciesDiffer: Boolean(options?.currenciesDiffer),
+  });
+  const gross = calculateGross(serviceCharge, styling);
+  const margin = calculateMargin(gross, acquirerCalc.amount);
+  const coupon = calculateCoupon(margin, couponPct);
+  const referral = calculateReferral(margin, bonusPct);
+  const commission = calculateCommission(serviceCharge, coupon);
+  const profit = calculateProfit(margin, coupon);
+  const toCash = calculateToCash({
+    sum,
+    coupon,
+    commission,
+    payer: inputs.payer,
+  });
+
+  return {
+    sum,
+    styling,
+    paymentSystem: ps,
+    payer: inputs.payer,
+    sender,
+    tariff: inputs.tariff || 0,
+    chargePct,
+    senderPlus1,
+    intlPp,
+    usdCard,
+    couponPct,
+    bonusPct,
+    couponPctIn,
+    bonusPctIn,
+    serviceCharge,
+    toPay,
+    acquirerRate: acquirerCalc.rate,
+    acquirer: acquirerCalc.amount,
+    acquirerFromRubGross: acquirerCalc.fromRubGross,
+    gross,
+    margin,
+    coupon,
+    referral,
+    commission,
+    profit,
+    profitAfterReferral: profit - referral,
+    toCash,
+  };
+}
+
+export function observedMargin(params: {
+  commission: number;
+  coupon: number;
+  styling: number;
+  toPay: number;
+  paymentSystem: string;
+}): number {
+  const rate = ACQUIRER_RATES[params.paymentSystem] ?? 0;
+  if (FX_PAYMENT_SYSTEMS.has(params.paymentSystem)) {
+    return params.commission + params.coupon + params.styling;
+  }
+  return params.commission + params.coupon + params.styling - params.toPay * rate;
+}
