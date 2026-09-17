@@ -149,7 +149,7 @@ export default function App() {
           ) : null}
           {analysis.calculation.acquirerFromRubGross ? (
             <p className="mx-auto max-w-5xl px-4 pt-2 text-sm text-muted-foreground">
-              Для иностранной карты эквайер считается как 8.5% от рублёвого gross, потому что «к оплате» в JSON может быть не в рублях.
+              Для иностранной карты эквайер считается как 8.5% от рублёвой суммы с наценкой сервиса: поле «к оплате» в JSON может быть не в рублях.
             </p>
           ) : null}
           <PaymentFlow analysis={analysis} />

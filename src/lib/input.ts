@@ -241,12 +241,23 @@ function normalizePayment(data: unknown, rawText: string): PaymentSnapshot {
   };
 }
 
+function toMismatch(
+  label: string,
+  calculated: number,
+  observed: number | null | undefined,
+): FieldMismatch | null {
+  if (observed === null || observed === undefined) return null;
+  if (Math.abs(calculated - observed) <= 0.05) return null;
+  return { label, calculated, observed };
+}
+
 function mismatches(analysisInputs: {
   snapshot: PaymentSnapshot;
   calculation: ReturnType<typeof calculatePayment>;
 }): FieldMismatch[] {
   const { snapshot, calculation } = analysisInputs;
-  const pairs: Array<{ label: string; calculated: number; observed: number | null | undefined }> = [
+  const skipToPay = FX_PAYMENT_SYSTEMS.has(snapshot.observed.paymentSystem || "");
+  const rows: Array<{ label: string; calculated: number; observed: number | null | undefined }> = [
     { label: "К оплате", calculated: calculation.toPay, observed: snapshot.observed.toPay },
     { label: "Комиссия сервиса", calculated: calculation.commission, observed: snapshot.observed.commission },
     { label: "Прибыль сервиса", calculated: calculation.profit, observed: snapshot.observed.profit },
@@ -254,25 +265,10 @@ function mismatches(analysisInputs: {
     { label: "Скидка по купону", calculated: calculation.coupon, observed: snapshot.observed.coupon },
     { label: "Бонус пригласившему", calculated: calculation.referral, observed: snapshot.observed.referral },
   ];
-  if (FX_PAYMENT_SYSTEMS.has(snapshot.observed.paymentSystem || "")) {
-    return pairs
-      .filter((row) => row.label !== "К оплате")
-      .filter((row) => row.observed !== null && row.observed !== undefined)
-      .filter((row) => Math.abs(row.calculated - row.observed) > 0.05)
-      .map((row) => ({
-        label: row.label,
-        calculated: row.calculated,
-        observed: row.observed as number,
-      }));
-  }
-  return pairs
-    .filter((row) => row.observed !== null && row.observed !== undefined)
-    .filter((row) => Math.abs(row.calculated - row.observed) > 0.05)
-    .map((row) => ({
-      label: row.label,
-      calculated: row.calculated,
-      observed: row.observed as number,
-    }));
+  return rows
+    .filter((row) => !(skipToPay && row.label === "К оплате"))
+    .map((row) => toMismatch(row.label, row.calculated, row.observed))
+    .filter((row): row is FieldMismatch => row !== null);
 }
 
 function pretty(value: unknown, fallback: string): string {

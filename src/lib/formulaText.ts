@@ -13,7 +13,7 @@ export function formulaAcquirer(calc: PaymentCalculation): string {
   const base = calc.acquirerFromRubGross
     ? `${formatCurrency(calc.sum + calc.serviceCharge)}`
     : `${formatCurrency(calc.toPay)}`;
-  const note = calc.acquirerFromRubGross ? " от рублёвого gross" : "";
+  const note = calc.acquirerFromRubGross ? " (рублёвая сумма + наценка сервиса)" : "";
   return `${formatPercent(calc.acquirerRate * 100)} × ${base}${note} = ${formatCurrency(calc.acquirer)}`;
 }
 

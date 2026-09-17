@@ -21,6 +21,17 @@ type JsonImporterProps = {
 export function JsonImporter({ open, onOpenChange, error, onAnalyze }: JsonImporterProps) {
   const id = useId();
   const [text, setText] = useState("");
+  const [clipError, setClipError] = useState<string | null>(null);
+
+  async function pasteFromClipboard() {
+    try {
+      const next = await navigator.clipboard.readText();
+      setText(next);
+      setClipError(null);
+    } catch (caught) {
+      setClipError(caught instanceof Error ? caught.message : "Нет доступа к буферу обмена");
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -32,7 +43,12 @@ export function JsonImporter({ open, onOpenChange, error, onAnalyze }: JsonImpor
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor={id}>JSON платежа</Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor={id}>JSON платежа</Label>
+            <Button type="button" variant="ghost" size="sm" onClick={() => void pasteFromClipboard()}>
+              Из буфера
+            </Button>
+          </div>
           <Textarea
             id={id}
             value={text}
@@ -41,6 +57,9 @@ export function JsonImporter({ open, onOpenChange, error, onAnalyze }: JsonImpor
             spellCheck={false}
           />
         </div>
+        {clipError ? (
+          <p className="text-sm text-muted-foreground">{clipError}</p>
+        ) : null}
         {error ? (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm">
             <p className="font-medium">{error.title}</p>

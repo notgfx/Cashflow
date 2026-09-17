@@ -3,7 +3,7 @@ import type { PaymentCalculation } from "@/types/payment";
 
 const ITEMS: Array<{ key: keyof Pick<PaymentCalculation, "toPay" | "gross" | "acquirer" | "margin" | "profit" | "toCash">; label: string }> = [
   { key: "toPay", label: "К оплате" },
-  { key: "gross", label: "Gross" },
+  { key: "gross", label: "Gross сервиса" },
   { key: "acquirer", label: "Эквайер" },
   { key: "margin", label: "Маржа" },
   { key: "profit", label: "Профит" },
