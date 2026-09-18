@@ -281,15 +281,6 @@ function pretty(value: unknown, fallback: string): string {
 
 export function ingestPayment(source: PaymentSource): InputResult<PaymentSnapshot> {
   try {
-    if (source.kind === "hash" || source.kind === "message") {
-      return {
-        ok: false,
-        error: {
-          title: "Источник пока не подключен",
-          detail: "Этот способ передачи данных зарезервирован для будущей интеграции.",
-        },
-      };
-    }
     if (source.kind === "manual") {
       return {
         ok: false,
@@ -300,8 +291,18 @@ export function ingestPayment(source: PaymentSource): InputResult<PaymentSnapsho
       };
     }
 
+    if (source.kind === "message") {
+      const snapshot = normalizePayment(source.payload, pretty(source.payload, ""));
+      return { ok: true, value: snapshot };
+    }
+
     const rawText =
-      source.kind === "example" ? pretty(examplePayment, "") : source.raw.trim();
+      source.kind === "example"
+        ? pretty(examplePayment, "")
+        : source.kind === "hash"
+          ? decodeURIComponent(source.payload).trim()
+          : source.raw.trim();
+
     if (!rawText) {
       return {
         ok: false,
