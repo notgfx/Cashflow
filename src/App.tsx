@@ -29,27 +29,47 @@ export default function App() {
   const [error, setError] = useState<InputError | null>(null);
   const [ready, setReady] = useState(false);
 
-  useEffect(() => {
-    const stored = loadSession();
-    if (stored?.cleared) {
-      setCleared(true);
+useEffect(() => {
+  const hash = window.location.hash;
+  if (hash.startsWith("#data=")) {
+    const payload = hash.slice("#data=".length);
+    const result = ingestPayment({ kind: "hash", payload });
+    // убираем хэш из адресной строки, чтобы при F5 не парсить его повторно
+    // и чтобы он не попал в историю/закладки
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+
+    if (result.ok) {
+      setSnapshot(result.value);
+      setInputs(result.value.inferred);
       setReady(true);
       return;
     }
-    if (stored?.jsonText) {
-      const result = ingestPayment({ kind: "text", raw: stored.jsonText });
-      if (result.ok) {
-        setSnapshot(result.value);
-        setInputs(result.value.inferred);
-        setReady(true);
-        return;
-      }
-    }
-    const demo = exampleSnapshot();
-    setSnapshot(demo);
-    setInputs(demo.inferred);
+    setError(result.error);
+    setPasteOpen(true);
     setReady(true);
-  }, []);
+    return;
+  }
+
+  const stored = loadSession();
+  if (stored?.cleared) {
+    setCleared(true);
+    setReady(true);
+    return;
+  }
+  if (stored?.jsonText) {
+    const result = ingestPayment({ kind: "text", raw: stored.jsonText });
+    if (result.ok) {
+      setSnapshot(result.value);
+      setInputs(result.value.inferred);
+      setReady(true);
+      return;
+    }
+  }
+  const demo = exampleSnapshot();
+  setSnapshot(demo);
+  setInputs(demo.inferred);
+  setReady(true);
+}, []);
 
   useEffect(() => {
     if (!ready) return;
