@@ -2,7 +2,7 @@ import { CommissionByUserHeart } from "@/components/payment/CommissionByUserHear
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { hasAcquirerRate } from "@/lib/fees";
-import { COMMISSION_BY_USER_LABEL, INVOICE_CBU_PROMO_HINT, PAYMENT_SYSTEM_LABELS } from "@/lib/labels";
+import { COMMISSION_BY_USER_LABEL, PAYMENT_SYSTEM_LABELS } from "@/lib/labels";
 import { PAYMENT_SYSTEMS, type ManualInputs as ManualValues } from "@/types/payment";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +15,24 @@ type ManualInputsProps = {
 const fieldClass =
   "h-9 w-full rounded-md border border-input bg-background px-3 text-sm";
 
+function PromoOffNote({ active }: { active: boolean }) {
+  return (
+    <p
+      className={cn(
+        "flex items-center gap-1 text-xs text-muted-foreground",
+        !active && "invisible",
+      )}
+      aria-hidden={!active}
+    >
+      <span>Не применяется при</span>
+      <CommissionByUserHeart active />
+    </p>
+  );
+}
+
 export function ManualInputs({ value, tariffFromJson, onChange }: ManualInputsProps) {
+  const invoiceCbu = value.payer === "sender" && value.commissionByUser;
+
   function patch(partial: Partial<ManualValues>) {
     onChange({ ...value, ...partial });
   }
@@ -65,6 +82,7 @@ export function ManualInputs({ value, tariffFromJson, onChange }: ManualInputsPr
               value={value.couponPct}
               onChange={(event) => patch({ couponPct: Number(event.target.value) })}
             />
+            <PromoOffNote active={invoiceCbu} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cf-bonus">Доля бонуса пригласившему, %</Label>
@@ -77,6 +95,7 @@ export function ManualInputs({ value, tariffFromJson, onChange }: ManualInputsPr
               value={value.bonusPct}
               onChange={(event) => patch({ bonusPct: Number(event.target.value) })}
             />
+            <PromoOffNote active={invoiceCbu} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cf-ps">Способ оплаты</Label>
@@ -163,17 +182,6 @@ export function ManualInputs({ value, tariffFromJson, onChange }: ManualInputsPr
               <CommissionByUserHeart active className="mt-0.5" />
               <span>{COMMISSION_BY_USER_LABEL}</span>
             </p>
-            {value.payer === "sender" ? (
-              <p
-                className={cn(
-                  "text-xs text-amber-600 dark:text-amber-400",
-                  !value.commissionByUser && "invisible",
-                )}
-                aria-hidden={!value.commissionByUser}
-              >
-                {INVOICE_CBU_PROMO_HINT}
-              </p>
-            ) : null}
           </div>
         </div>
       </div>

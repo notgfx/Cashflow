@@ -21,9 +21,7 @@ export function paymentSystemLabel(code: string | null | undefined): string {
 }
 
 export function payerLabel(payer: PayerRole): string {
-  return payer === "sender"
-    ? "Комиссию платит отправитель"
-    : "Комиссию платит получатель";
+  return payer === "sender" ? "Отправитель" : "Получатель";
 }
 
 export const COMMISSION_BY_USER_LABEL = "Отправитель сам выбрал оплатить комиссию";
