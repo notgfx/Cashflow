@@ -15,19 +15,13 @@ npm run dev
 npm run build
 ```
 
-Результат — `dist/`. Vite: `base: './'`, поэтому сайт работает и в корне домена, и в подпути GitHub Pages (`username.github.io/repo/`).
+Результат — `dist/`. Vite: `base: './'`, поэтому сайт работает и в корне домена, и в подпути.
 
 Локальная проверка production-сборки:
 
 ```bash
 npm run preview
 ```
-
-## GitHub Pages
-
-1. В репозитории: Settings → Pages → Source = **GitHub Actions**.
-2. Workflow [`.github/workflows/pages.yml`](.github/workflows/pages.yml) на `push` в `main`/`master` собирает `npm ci && npm run build` и публикует `dist/`.
-3. В `public/` лежит `.nojekyll`, чтобы Pages не обрабатывал статику через Jekyll.
 
 ## Архитектура
 
