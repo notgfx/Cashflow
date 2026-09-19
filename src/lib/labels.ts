@@ -32,7 +32,7 @@ export const INVOICE_CBU_PROMO_HINT =
   "При invoice и commission_by_user бонусы и скидки за промо не применяются.";
 
 export function stylingModeLabel(mode: "off" | "auto" | "custom"): string {
-  if (mode === "auto") return "Авто";
+  if (mode === "auto") return "Да";
   if (mode === "custom") return "Своя сумма";
   return "Нет";
 }

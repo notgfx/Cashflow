@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { hasAcquirerRate } from "@/lib/fees";
 import { COMMISSION_BY_USER_LABEL, INVOICE_CBU_PROMO_HINT, PAYMENT_SYSTEM_LABELS } from "@/lib/labels";
 import { PAYMENT_SYSTEMS, type ManualInputs as ManualValues } from "@/types/payment";
+import { cn } from "@/lib/utils";
 
 type ManualInputsProps = {
   value: ManualValues;
@@ -107,6 +108,34 @@ export function ManualInputs({ value, tariffFromJson, onChange }: ManualInputsPr
             ) : null}
           </div>
           <div className="space-y-1.5">
+            <Label htmlFor="cf-style-mode">Стилизация</Label>
+            <select
+              id="cf-style-mode"
+              className={fieldClass}
+              value={value.stylingMode}
+              onChange={(event) =>
+                patch({ stylingMode: event.target.value as ManualValues["stylingMode"] })
+              }
+            >
+              <option value="off">Нет</option>
+              <option value="auto">Да</option>
+              <option value="custom">Своя сумма</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="cf-style-amt">Сумма стилизации</Label>
+            <Input
+              id="cf-style-amt"
+              type="number"
+              min={0}
+              step="0.01"
+              className="tabular"
+              disabled={value.stylingMode !== "custom"}
+              value={value.stylingCustom}
+              onChange={(event) => patch({ stylingCustom: Number(event.target.value) })}
+            />
+          </div>
+          <div className="space-y-1.5">
             <div className="flex items-center gap-1.5">
               <Label htmlFor="cf-payer">Кто платит комиссию</Label>
               <CommissionByUserHeart
@@ -124,43 +153,27 @@ export function ManualInputs({ value, tariffFromJson, onChange }: ManualInputsPr
               <option value="recipient">Получатель</option>
               <option value="sender">Отправитель</option>
             </select>
-            {value.commissionByUser ? (
-              <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                <CommissionByUserHeart active className="mt-0.5" />
-                <span>{COMMISSION_BY_USER_LABEL}</span>
+            <p
+              className={cn(
+                "flex items-start gap-1.5 text-xs text-muted-foreground",
+                !value.commissionByUser && "invisible",
+              )}
+              aria-hidden={!value.commissionByUser}
+            >
+              <CommissionByUserHeart active className="mt-0.5" />
+              <span>{COMMISSION_BY_USER_LABEL}</span>
+            </p>
+            {value.payer === "sender" ? (
+              <p
+                className={cn(
+                  "text-xs text-amber-600 dark:text-amber-400",
+                  !value.commissionByUser && "invisible",
+                )}
+                aria-hidden={!value.commissionByUser}
+              >
+                {INVOICE_CBU_PROMO_HINT}
               </p>
             ) : null}
-            {value.payer === "sender" && value.commissionByUser ? (
-              <p className="text-xs text-amber-600 dark:text-amber-400">{INVOICE_CBU_PROMO_HINT}</p>
-            ) : null}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="cf-style-mode">Стилизация</Label>
-            <select
-              id="cf-style-mode"
-              className={fieldClass}
-              value={value.stylingMode}
-              onChange={(event) =>
-                patch({ stylingMode: event.target.value as ManualValues["stylingMode"] })
-              }
-            >
-              <option value="off">Нет</option>
-              <option value="auto">Авто</option>
-              <option value="custom">Своя сумма</option>
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="cf-style-amt">Сумма стилизации</Label>
-            <Input
-              id="cf-style-amt"
-              type="number"
-              min={0}
-              step="0.01"
-              className="tabular"
-              disabled={value.stylingMode !== "custom"}
-              value={value.stylingCustom}
-              onChange={(event) => patch({ stylingCustom: Number(event.target.value) })}
-            />
           </div>
         </div>
       </div>

@@ -75,7 +75,7 @@ export function TransactionDetails({ analysis }: TransactionDetailsProps) {
           />
           <Row label="Кто платит комиссию" value={payerLabel(calculation.payer)} />
           <Row
-            label="commission_by_user"
+            label="Сам выбрал покрыть комиссию"
             value={
               <span className="inline-flex items-center justify-end gap-1.5">
                 <CommissionByUserHeart active={calculation.commissionByUser} />
