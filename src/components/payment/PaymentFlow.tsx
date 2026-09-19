@@ -43,7 +43,9 @@ export function PaymentFlow({ analysis }: PaymentFlowProps) {
         <PaymentNode
           title="Эквайер"
           value={formatCurrency(calculation.acquirer)}
-          subtitle={method}
+          subtitle={
+            calculation.acquirerRateKnown ? method : `${method} · ставка неизвестна`
+          }
           formula={formulaAcquirer(calculation)}
           variant="acquirer"
         />

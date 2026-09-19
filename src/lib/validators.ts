@@ -1,6 +1,3 @@
-import type { PaymentSystem } from "@/types/payment";
-import { PAYMENT_SYSTEMS } from "@/types/payment";
-
 export function parseNumber(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
   if (typeof value === "number") {
@@ -41,11 +38,4 @@ export function parseVars(raw: unknown): Record<string, unknown> {
   }
   if (isRecord(raw)) return raw;
   throw new Error("Блок дополнительных данных имеет неверный формат");
-}
-
-export function asPaymentSystem(value: string | null | undefined): PaymentSystem | "" {
-  if (!value) return "";
-  return (PAYMENT_SYSTEMS as readonly string[]).includes(value)
-    ? (value as PaymentSystem)
-    : "";
 }

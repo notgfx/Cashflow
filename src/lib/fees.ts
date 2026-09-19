@@ -40,8 +40,12 @@ export function isIntlCard(code: string): boolean {
   return code === FEES.intlCardPaymentSystem;
 }
 
+export function hasAcquirerRate(code: string): boolean {
+  return Boolean(code) && Object.prototype.hasOwnProperty.call(ACQUIRER_RATES, code);
+}
+
 export function acquirerRate(code: string): number {
-  return ACQUIRER_RATES[code] ?? 0;
+  return hasAcquirerRate(code) ? ACQUIRER_RATES[code] : 0;
 }
 
 export function acquirerFromRubGross(

@@ -63,7 +63,15 @@ export function TransactionDetails({ analysis }: TransactionDetailsProps) {
           <Row label="Сумма" value={formatCurrency(calculation.sum)} />
           <Row label="Стилизация" value={formatCurrency(calculation.styling)} />
           <Row label="К оплате" value={formatCurrency(calculation.toPay)} hint={formulaToPay(calculation)} />
-          <Row label="Способ оплаты" value={paymentSystemLabel(calculation.paymentSystem)} />
+          <Row
+            label="Способ оплаты"
+            value={paymentSystemLabel(calculation.paymentSystem)}
+            hint={
+              calculation.acquirerRateKnown
+                ? undefined
+                : "Нет в таблице ставок эквайера — 0% в расчёте не из справочника"
+            }
+          />
           <Row label="Кто платит комиссию" value={payerLabel(calculation.payer)} />
           <Row
             label="Тариф"
@@ -78,7 +86,11 @@ export function TransactionDetails({ analysis }: TransactionDetailsProps) {
             hint={formulaServiceCharge(calculation)}
           />
           <Row label="Gross сервиса" value={formatCurrency(calculation.gross)} hint={formulaGross(calculation)} />
-          <Row label="Эквайер" value={formatCurrency(calculation.acquirer)} hint={formulaAcquirer(calculation)} />
+          <Row
+            label="Эквайер"
+            value={formatCurrency(calculation.acquirer)}
+            hint={formulaAcquirer(calculation)}
+          />
         </Section>
         <Section title="Прибыль">
           <Row label="Маржа" value={formatCurrency(calculation.margin)} hint={formulaMargin(calculation)} />

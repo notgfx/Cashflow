@@ -7,14 +7,15 @@ import {
   autoStyling,
 } from "@/lib/calculations";
 import { FEES, FX_PAYMENT_SYSTEMS, fxUnitLabel, isIntlCard } from "@/lib/fees";
+import { paymentSystemLabel } from "@/lib/labels";
 import {
-  asPaymentSystem,
   isRecord,
   parseNumber,
   parseVars,
   requireSum,
 } from "@/lib/validators";
 import type {
+  AnalysisWarning,
   ExchangeRateInfo,
   FieldMismatch,
   InputResult,
@@ -152,7 +153,7 @@ function inferManual(observed: ObservedPayment): { inputs: ManualInputs; tariffF
       sum: observed.sum,
       stylingMode,
       stylingCustom: styling,
-      paymentSystem: asPaymentSystem(ps) || "",
+      paymentSystem: ps,
       payer,
       tariff,
       couponPct: usd ? 0 : couponPct,
@@ -269,6 +270,26 @@ function mismatches(analysisInputs: {
     .filter((row): row is FieldMismatch => row !== null);
 }
 
+function analysisWarnings(calculation: ReturnType<typeof calculatePayment>): AnalysisWarning[] {
+  if (calculation.acquirerRateKnown) return [];
+  const code = calculation.paymentSystem;
+  if (!code) {
+    return [
+      {
+        title: "Нет ставки эквайера",
+        detail:
+          "Способ оплаты не указан. Комиссия эквайера не взята из таблицы — в расчёте стоит 0%, это не известная ставка.",
+      },
+    ];
+  }
+  return [
+    {
+      title: "Нет ставки эквайера",
+      detail: `Платёжная система «${paymentSystemLabel(code)}» (${code}) отсутствует в таблице ставок эквайера. Это не явные 0% из справочника: в расчёте временно 0%, маржа и выводы могут быть завышены.`,
+    },
+  ];
+}
+
 function pretty(value: unknown, fallback: string): string {
   try {
     return JSON.stringify(value, null, 2);
@@ -333,6 +354,7 @@ export function analyzePayment(
     snapshot,
     calculation,
     mismatches: snapshot ? mismatches({ snapshot, calculation }) : [],
+    warnings: analysisWarnings(calculation),
   };
 }
 

@@ -1,5 +1,6 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { hasAcquirerRate } from "@/lib/fees";
 import { PAYMENT_SYSTEM_LABELS } from "@/lib/labels";
 import { PAYMENT_SYSTEMS, type ManualInputs as ManualValues } from "@/types/payment";
 
@@ -86,12 +87,23 @@ export function ManualInputs({ value, tariffFromJson, onChange }: ManualInputsPr
               }
             >
               <option value="">Не указан</option>
+              {value.paymentSystem &&
+              !(PAYMENT_SYSTEMS as readonly string[]).includes(value.paymentSystem) ? (
+                <option value={value.paymentSystem}>
+                  {value.paymentSystem} (нет в справочнике)
+                </option>
+              ) : null}
               {PAYMENT_SYSTEMS.map((code) => (
                 <option key={code} value={code}>
                   {PAYMENT_SYSTEM_LABELS[code]}
                 </option>
               ))}
             </select>
+            {!hasAcquirerRate(value.paymentSystem) ? (
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                Нет ставки эквайера в таблице — расчёт не подставляет 0% как известную комиссию
+              </p>
+            ) : null}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cf-payer">Кто платит комиссию</Label>

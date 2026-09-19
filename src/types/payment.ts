@@ -20,7 +20,7 @@ export type ManualInputs = {
   sum: number;
   stylingMode: StylingMode;
   stylingCustom: number;
-  paymentSystem: PaymentSystem | "";
+  paymentSystem: string;
   payer: PayerRole;
   tariff: number;
   couponPct: number;
@@ -64,6 +64,7 @@ export type PaymentCalculation = {
   serviceCharge: number;
   toPay: number;
   acquirerRate: number;
+  acquirerRateKnown: boolean;
   acquirer: number;
   acquirerFromRubGross: boolean;
   gross: number;
@@ -89,6 +90,11 @@ export type FieldMismatch = {
   observed: number;
 };
 
+export type AnalysisWarning = {
+  title: string;
+  detail: string;
+};
+
 export type PaymentSnapshot = {
   observed: ObservedPayment;
   inferred: ManualInputs;
@@ -102,6 +108,7 @@ export type PaymentAnalysis = {
   snapshot: PaymentSnapshot | null;
   calculation: PaymentCalculation;
   mismatches: FieldMismatch[];
+  warnings: AnalysisWarning[];
 };
 
 export type PaymentSource =

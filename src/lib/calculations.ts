@@ -6,6 +6,7 @@ import {
   SHARE_BUCKETS,
   acquirerFromRubGross,
   acquirerRate,
+  hasAcquirerRate,
   isIntlCard,
 } from "@/lib/fees";
 
@@ -61,14 +62,15 @@ export function calculateAcquirer(params: {
   sum: number;
   serviceCharge: number;
   currenciesDiffer: boolean;
-}): { amount: number; rate: number; fromRubGross: boolean } {
+}): { amount: number; rate: number; fromRubGross: boolean; known: boolean } {
+  const known = hasAcquirerRate(params.paymentSystem);
   const rate = acquirerRate(params.paymentSystem);
   if (acquirerFromRubGross(params.paymentSystem, params.currenciesDiffer)) {
     const rubGross = params.sum + params.serviceCharge;
-    return { amount: rubGross * rate, rate, fromRubGross: true };
+    return { amount: rubGross * rate, rate, fromRubGross: true, known };
   }
 
-  return { amount: params.toPay * rate, rate, fromRubGross: false };
+  return { amount: params.toPay * rate, rate, fromRubGross: false, known };
 }
 
 export function calculateMargin(gross: number, acquirer: number): number {
@@ -164,6 +166,7 @@ export function calculatePayment(
     serviceCharge,
     toPay,
     acquirerRate: acquirerCalc.rate,
+    acquirerRateKnown: acquirerCalc.known,
     acquirer: acquirerCalc.amount,
     acquirerFromRubGross: acquirerCalc.fromRubGross,
     gross,

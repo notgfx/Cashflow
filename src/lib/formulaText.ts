@@ -11,6 +11,9 @@ export function formulaToPay(calc: PaymentCalculation): string {
 }
 
 export function formulaAcquirer(calc: PaymentCalculation): string {
+  if (!calc.acquirerRateKnown) {
+    return `ставка неизвестна (нет в таблице) → ${formatCurrency(calc.acquirer)}`;
+  }
   const base = calc.acquirerFromRubGross
     ? `${formatCurrency(calc.sum + calc.serviceCharge)}`
     : `${formatCurrency(calc.toPay)}`;
