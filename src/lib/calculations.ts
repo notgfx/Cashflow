@@ -31,6 +31,7 @@ export function moneyRound(value: number): number {
 
 export function snapSharePct(raw: number, bucketTol = 1.5): number {
   if (!Number.isFinite(raw) || raw <= 0.5) return 0;
+  if (SHARE_BUCKETS.length === 0) return Math.round(raw * 10) / 10;
   const best = SHARE_BUCKETS.reduce((acc, bucket) =>
     Math.abs(bucket - raw) < Math.abs(acc - raw) ? bucket : acc,
   );
