@@ -1,7 +1,8 @@
+import { CommissionByUserHeart } from "@/components/payment/CommissionByUserHeart";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { hasAcquirerRate } from "@/lib/fees";
-import { PAYMENT_SYSTEM_LABELS } from "@/lib/labels";
+import { COMMISSION_BY_USER_LABEL, INVOICE_CBU_PROMO_HINT, PAYMENT_SYSTEM_LABELS } from "@/lib/labels";
 import { PAYMENT_SYSTEMS, type ManualInputs as ManualValues } from "@/types/payment";
 
 type ManualInputsProps = {
@@ -106,7 +107,14 @@ export function ManualInputs({ value, tariffFromJson, onChange }: ManualInputsPr
             ) : null}
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="cf-payer">Кто платит комиссию</Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="cf-payer">Кто платит комиссию</Label>
+              <CommissionByUserHeart
+                active={value.commissionByUser}
+                interactive
+                onToggle={() => patch({ commissionByUser: !value.commissionByUser })}
+              />
+            </div>
             <select
               id="cf-payer"
               className={fieldClass}
@@ -116,6 +124,15 @@ export function ManualInputs({ value, tariffFromJson, onChange }: ManualInputsPr
               <option value="recipient">Получатель</option>
               <option value="sender">Отправитель</option>
             </select>
+            {value.commissionByUser ? (
+              <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                <CommissionByUserHeart active className="mt-0.5" />
+                <span>{COMMISSION_BY_USER_LABEL}</span>
+              </p>
+            ) : null}
+            {value.payer === "sender" && value.commissionByUser ? (
+              <p className="text-xs text-amber-600 dark:text-amber-400">{INVOICE_CBU_PROMO_HINT}</p>
+            ) : null}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cf-style-mode">Стилизация</Label>

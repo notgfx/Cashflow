@@ -30,10 +30,16 @@ export function formulaMargin(calc: PaymentCalculation): string {
 }
 
 export function formulaCoupon(calc: PaymentCalculation): string {
+  if (calc.invoiceCbu) {
+    return `промо отключено (invoice + commission_by_user) → ${formatCurrency(calc.coupon)}`;
+  }
   return `${formatPercent(calc.couponPct)} × ${formatCurrency(calc.margin)} = ${formatCurrency(calc.coupon)}`;
 }
 
 export function formulaReferral(calc: PaymentCalculation): string {
+  if (calc.invoiceCbu) {
+    return `бонус отключён (invoice + commission_by_user) → ${formatCurrency(calc.referral)}`;
+  }
   return `${formatPercent(calc.bonusPct)} × ${formatCurrency(calc.margin)} = ${formatCurrency(calc.referral)}`;
 }
 

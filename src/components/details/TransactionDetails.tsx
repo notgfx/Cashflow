@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { CommissionByUserHeart } from "@/components/payment/CommissionByUserHeart";
 import { formatCurrency, formatPercent, formatRate, MISSING } from "@/lib/formatters";
 import {
   formulaAcquirer,
@@ -12,13 +13,13 @@ import {
   formulaToCash,
   formulaToPay,
 } from "@/lib/formulaText";
-import { payerLabel, paymentSystemLabel } from "@/lib/labels";
+import { COMMISSION_BY_USER_LABEL, INVOICE_CBU_PROMO_HINT, payerLabel, paymentSystemLabel } from "@/lib/labels";
 import { Separator } from "@/components/ui/separator";
 import type { PaymentAnalysis } from "@/types/payment";
 
 type RowProps = {
   label: string;
-  value: string;
+  value: ReactNode;
   hint?: string;
 };
 
@@ -29,7 +30,7 @@ function Row({ label, value, hint }: RowProps) {
         <p className="text-muted-foreground">{label}</p>
         {hint ? <p className="mt-0.5 text-xs text-muted-foreground/80">{hint}</p> : null}
       </div>
-      <p className="tabular text-right font-medium">{value}</p>
+      <div className="tabular text-right font-medium">{value}</div>
     </div>
   );
 }
@@ -73,6 +74,24 @@ export function TransactionDetails({ analysis }: TransactionDetailsProps) {
             }
           />
           <Row label="Кто платит комиссию" value={payerLabel(calculation.payer)} />
+          <Row
+            label="commission_by_user"
+            value={
+              <span className="inline-flex items-center justify-end gap-1.5">
+                <CommissionByUserHeart active={calculation.commissionByUser} />
+                {calculation.commissionByUser ? "Да" : "Нет"}
+              </span>
+            }
+            hint={
+              calculation.commissionByUser
+                ? calculation.invoiceCbu
+                  ? `${COMMISSION_BY_USER_LABEL}. ${INVOICE_CBU_PROMO_HINT}`
+                  : COMMISSION_BY_USER_LABEL
+                : calculation.sender
+                  ? "Invoice без выбора отправителя оплатить комиссию"
+                  : undefined
+            }
+          />
           <Row
             label="Тариф"
             value={formatPercent(calculation.tariff)}

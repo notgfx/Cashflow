@@ -10,6 +10,7 @@ import { FEES, FX_PAYMENT_SYSTEMS, fxUnitLabel, isIntlCard } from "@/lib/fees";
 import { paymentSystemLabel } from "@/lib/labels";
 import {
   isRecord,
+  parseBoolFlag,
   parseNumber,
   parseVars,
   requireSum,
@@ -101,6 +102,7 @@ function defaultManual(): ManualInputs {
     stylingCustom: 0,
     paymentSystem: FEES.defaults.paymentSystem as ManualInputs["paymentSystem"],
     payer: "recipient",
+    commissionByUser: false,
     tariff: FEES.defaults.tariff,
     couponPct: FEES.defaults.couponPct,
     bonusPct: FEES.defaults.bonusPct,
@@ -155,6 +157,7 @@ function inferManual(observed: ObservedPayment): { inputs: ManualInputs; tariffF
       stylingCustom: styling,
       paymentSystem: ps,
       payer,
+      commissionByUser: Boolean(observed.commissionByUser),
       tariff,
       couponPct: usd ? 0 : couponPct,
       bonusPct: usd ? 0 : bonusPct,
@@ -183,6 +186,7 @@ function normalizePayment(data: unknown, rawText: string): PaymentSnapshot {
     (typeof data.payment_system === "string" && data.payment_system) ||
     null;
   const ik = typeof vars.ik_am_t === "string" ? vars.ik_am_t : null;
+  const commissionByUser = parseBoolFlag(vars.commission_by_user) || parseBoolFlag(data.commission_by_user);
   const styling = parseNumber(premium.styling_cost) ?? 0;
   const coupon = parseNumber(vars.coupon_discount) ?? 0;
   const referral = parseNumber(vars.bonus_to_referrer) ?? 0;
@@ -217,6 +221,7 @@ function normalizePayment(data: unknown, rawText: string): PaymentSnapshot {
     styling,
     paymentSystem,
     payerHint: payer,
+    commissionByUser,
     hiddenAmount: parseNumber(hidden.AMOUNT),
     hiddenCurrencyId: hidden.CUR_ID as string | number | null | undefined ?? null,
   };
@@ -271,23 +276,30 @@ function mismatches(analysisInputs: {
 }
 
 function analysisWarnings(calculation: ReturnType<typeof calculatePayment>): AnalysisWarning[] {
-  if (calculation.acquirerRateKnown) return [];
-  const code = calculation.paymentSystem;
-  if (!code) {
-    return [
-      {
+  const items: AnalysisWarning[] = [];
+  if (calculation.invoiceCbu) {
+    items.push({
+      title: "Бонусы и промо не применяются",
+      detail:
+        "Сочетание invoice (комиссию платит отправитель) и commission_by_user: скидка по промо и бонус пригласившему не начисляются.",
+    });
+  }
+  if (!calculation.acquirerRateKnown) {
+    const code = calculation.paymentSystem;
+    if (!code) {
+      items.push({
         title: "Нет ставки эквайера",
         detail:
           "Способ оплаты не указан. Комиссия эквайера не взята из таблицы — в расчёте стоит 0%, это не известная ставка.",
-      },
-    ];
+      });
+    } else {
+      items.push({
+        title: "Нет ставки эквайера",
+        detail: `Платёжная система «${paymentSystemLabel(code)}» (${code}) отсутствует в таблице ставок эквайера. Это не явные 0% из справочника: в расчёте временно 0%, маржа и выводы могут быть завышены.`,
+      });
+    }
   }
-  return [
-    {
-      title: "Нет ставки эквайера",
-      detail: `Платёжная система «${paymentSystemLabel(code)}» (${code}) отсутствует в таблице ставок эквайера. Это не явные 0% из справочника: в расчёте временно 0%, маржа и выводы могут быть завышены.`,
-    },
-  ];
+  return items;
 }
 
 function pretty(value: unknown, fallback: string): string {

@@ -114,9 +114,12 @@ export function calculatePayment(
   const usdCard = isIntlCard(ps);
   const couponPctIn = inputs.couponPct || 0;
   const bonusPctIn = inputs.bonusPct || 0;
-  const couponPct = usdCard ? 0 : couponPctIn;
-  const bonusPct = usdCard ? 0 : bonusPctIn;
   const sender = inputs.payer === "sender";
+  const commissionByUser = Boolean(inputs.commissionByUser);
+  const invoiceCbu = sender && commissionByUser;
+  const promoOff = usdCard || invoiceCbu;
+  const couponPct = promoOff ? 0 : couponPctIn;
+  const bonusPct = promoOff ? 0 : bonusPctIn;
   const senderPlus1 = sender && couponPct <= 0 && bonusPct <= 0;
   const intlPp = usdCard ? FEES.intlCardExtraPp : 0;
   const chargePct =
@@ -154,6 +157,8 @@ export function calculatePayment(
     paymentSystem: ps,
     payer: inputs.payer,
     sender,
+    commissionByUser,
+    invoiceCbu,
     tariff: inputs.tariff || 0,
     chargePct,
     senderPlus1,

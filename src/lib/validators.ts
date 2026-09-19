@@ -1,3 +1,12 @@
+export function parseBoolFlag(value: unknown): boolean {
+  if (value === true || value === 1) return true;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "true" || normalized === "1";
+  }
+  return false;
+}
+
 export function parseNumber(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
   if (typeof value === "number") {

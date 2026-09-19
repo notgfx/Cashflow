@@ -22,6 +22,7 @@ export type ManualInputs = {
   stylingCustom: number;
   paymentSystem: string;
   payer: PayerRole;
+  commissionByUser: boolean;
   tariff: number;
   couponPct: number;
   bonusPct: number;
@@ -42,6 +43,7 @@ export type ObservedPayment = {
   styling?: number | null;
   paymentSystem?: string | null;
   payerHint?: PayerRole | null;
+  commissionByUser?: boolean;
   hiddenAmount?: number | null;
   hiddenCurrencyId?: string | number | null;
 };
@@ -52,6 +54,8 @@ export type PaymentCalculation = {
   paymentSystem: string;
   payer: PayerRole;
   sender: boolean;
+  commissionByUser: boolean;
+  invoiceCbu: boolean;
   tariff: number;
   chargePct: number;
   senderPlus1: boolean;

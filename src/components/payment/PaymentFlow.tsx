@@ -1,3 +1,4 @@
+import { CommissionByUserHeart } from "@/components/payment/CommissionByUserHeart";
 import { FlowConnector } from "@/components/payment/FlowConnector";
 import { MarginNode } from "@/components/payment/MarginNode";
 import { PaymentNode } from "@/components/payment/PaymentNode";
@@ -11,7 +12,7 @@ import {
   formulaMargin,
   formulaToPay,
 } from "@/lib/formulaText";
-import { paymentSystemLabel } from "@/lib/labels";
+import { COMMISSION_BY_USER_LABEL, paymentSystemLabel } from "@/lib/labels";
 import type { PaymentAnalysis } from "@/types/payment";
 
 type PaymentFlowProps = {
@@ -30,9 +31,14 @@ export function PaymentFlow({ analysis }: PaymentFlowProps) {
       <PaymentNode
         title="Плательщик"
         value={formatCurrency(calculation.toPay)}
-        subtitle={`${method} · ${tariffNote}`}
+        subtitle={
+          calculation.commissionByUser
+            ? `${method} · ${tariffNote} · ${COMMISSION_BY_USER_LABEL}`
+            : `${method} · ${tariffNote}`
+        }
         formula={formulaToPay(calculation)}
         variant="payer"
+        icon={<CommissionByUserHeart active={calculation.commissionByUser} />}
         className="max-w-lg"
       />
       <p className="mt-2 text-center text-xs text-muted-foreground">
