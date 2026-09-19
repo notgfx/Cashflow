@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { CommissionByUserHeart } from "@/components/payment/CommissionByUserHeart";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,54 @@ type ManualInputsProps = {
 
 const fieldClass =
   "h-9 w-full rounded-md border border-input bg-background px-3 text-sm";
+
+function parseNumericDraft(raw: string): number | null {
+  if (raw.trim() === "") return 0;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+function NumericField({
+  id,
+  value,
+  onChange,
+  min = 0,
+  step,
+  disabled,
+}: {
+  id: string;
+  value: number;
+  onChange: (n: number) => void;
+  min?: number;
+  step?: string;
+  disabled?: boolean;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+
+  return (
+    <Input
+      id={id}
+      type="number"
+      min={min}
+      step={step}
+      disabled={disabled}
+      className="tabular"
+      value={draft ?? value}
+      onFocus={() => setDraft(String(value))}
+      onChange={(event) => {
+        const raw = event.target.value;
+        setDraft(raw);
+        const parsed = parseNumericDraft(raw);
+        if (parsed !== null) onChange(parsed);
+      }}
+      onBlur={() => {
+        const parsed = parseNumericDraft(draft ?? String(value));
+        onChange(parsed !== null ? Math.max(min, parsed) : 0);
+        setDraft(null);
+      }}
+    />
+  );
+}
 
 function PromoOffNote({ active }: { active: boolean }) {
   return (
@@ -46,26 +95,22 @@ export function ManualInputs({ value, tariffFromJson, onChange }: ManualInputsPr
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5">
             <Label htmlFor="cf-sum">Сумма</Label>
-            <Input
+            <NumericField
               id="cf-sum"
-              type="number"
               min={0}
               step="0.01"
-              className="tabular"
               value={value.sum}
-              onChange={(event) => patch({ sum: Number(event.target.value) })}
+              onChange={(sum) => patch({ sum })}
             />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cf-tariff">Тариф, %</Label>
-            <Input
+            <NumericField
               id="cf-tariff"
-              type="number"
               min={0}
               step="0.1"
-              className="tabular"
               value={value.tariff}
-              onChange={(event) => patch({ tariff: Number(event.target.value) })}
+              onChange={(tariff) => patch({ tariff })}
             />
             {tariffFromJson ? (
               <p className="text-xs text-muted-foreground">Из JSON, не из профиля получателя</p>
@@ -73,27 +118,23 @@ export function ManualInputs({ value, tariffFromJson, onChange }: ManualInputsPr
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cf-coupon">Доля купона от маржи, %</Label>
-            <Input
+            <NumericField
               id="cf-coupon"
-              type="number"
               min={0}
               step="0.1"
-              className="tabular"
               value={value.couponPct}
-              onChange={(event) => patch({ couponPct: Number(event.target.value) })}
+              onChange={(couponPct) => patch({ couponPct })}
             />
             <PromoOffNote active={invoiceCbu} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cf-bonus">Доля бонуса пригласившему, %</Label>
-            <Input
+            <NumericField
               id="cf-bonus"
-              type="number"
               min={0}
               step="0.1"
-              className="tabular"
               value={value.bonusPct}
-              onChange={(event) => patch({ bonusPct: Number(event.target.value) })}
+              onChange={(bonusPct) => patch({ bonusPct })}
             />
             <PromoOffNote active={invoiceCbu} />
           </div>
@@ -143,15 +184,13 @@ export function ManualInputs({ value, tariffFromJson, onChange }: ManualInputsPr
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cf-style-amt">Сумма стилизации</Label>
-            <Input
+            <NumericField
               id="cf-style-amt"
-              type="number"
               min={0}
               step="0.01"
-              className="tabular"
               disabled={value.stylingMode !== "custom"}
               value={value.stylingCustom}
-              onChange={(event) => patch({ stylingCustom: Number(event.target.value) })}
+              onChange={(stylingCustom) => patch({ stylingCustom })}
             />
           </div>
           <div className="space-y-1.5">
