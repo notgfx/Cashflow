@@ -1,35 +1,21 @@
 import type { ManualInputs, PaymentCalculation, PayerRole } from "@/types/payment";
+import {
+  ACQUIRER_RATES,
+  FEES,
+  FX_PAYMENT_SYSTEMS,
+  SHARE_BUCKETS,
+  acquirerFromRubGross,
+  acquirerRate,
+  isIntlCard,
+} from "@/lib/fees";
 
-export const ACQUIRER_RATES: Record<string, number> = {
-  fsbp: 0.012,
-  fcard: 0.032,
-  fcardusd: 0.085,
-  fusdt: 0,
-  fethereum: 0,
-  flitecoin: 0,
-  fbitcoin: 0,
-  ffreekassa: 0,
-  dppaypal: 0,
-};
-
-export const FX_PAYMENT_SYSTEMS = new Set([
-  "fcardusd",
-  "fusdt",
-  "fethereum",
-  "flitecoin",
-  "fbitcoin",
-]);
-
-export const SHARE_BUCKETS = [0, 10, 20, 25, 50, 79] as const;
-
-const INTL_CARD_PP = 10;
-const SENDER_NO_PROMO_PP = 1;
+export { ACQUIRER_RATES, FX_PAYMENT_SYSTEMS, SHARE_BUCKETS };
 
 export function moneyRound(value: number): number {
   return Math.round((value + 1e-12) * 100) / 100;
 }
 
-export function snapSharePct(raw: number, bucketTol = 1.5): number {
+export function snapSharePct(raw: number, bucketTol = FEES.shareBucketTolerance): number {
   if (!Number.isFinite(raw) || raw <= 0.5) return 0;
   if (SHARE_BUCKETS.length === 0) return Math.round(raw * 10) / 10;
   const best = SHARE_BUCKETS.reduce((acc, bucket) =>
@@ -41,7 +27,8 @@ export function snapSharePct(raw: number, bucketTol = 1.5): number {
 
 export function autoStyling(sum: number): number {
   if (sum <= 0) return 0;
-  return Math.min(Math.max(sum * 0.1, 10), 5000);
+  const { rate, min, max } = FEES.autoStyling;
+  return Math.min(Math.max(sum * rate, min), max);
 }
 
 export function resolveStyling(inputs: ManualInputs): number {
@@ -75,12 +62,8 @@ export function calculateAcquirer(params: {
   serviceCharge: number;
   currenciesDiffer: boolean;
 }): { amount: number; rate: number; fromRubGross: boolean } {
-  const rate = ACQUIRER_RATES[params.paymentSystem] ?? 0;
-  const usdCard = params.paymentSystem === "fcardusd";
-
-  // TODO: confirm exact business formula when «к оплате» is not in RUB.
-  // For foreign cards the raw amount is often USD; model uses 8.5% of RUB gross.
-  if (usdCard && params.currenciesDiffer) {
+  const rate = acquirerRate(params.paymentSystem);
+  if (acquirerFromRubGross(params.paymentSystem, params.currenciesDiffer)) {
     const rubGross = params.sum + params.serviceCharge;
     return { amount: rubGross * rate, rate, fromRubGross: true };
   }
@@ -126,15 +109,16 @@ export function calculatePayment(
   const sum = inputs.sum || 0;
   const styling = resolveStyling(inputs);
   const ps = inputs.paymentSystem || "";
-  const usdCard = ps === "fcardusd";
+  const usdCard = isIntlCard(ps);
   const couponPctIn = inputs.couponPct || 0;
   const bonusPctIn = inputs.bonusPct || 0;
   const couponPct = usdCard ? 0 : couponPctIn;
   const bonusPct = usdCard ? 0 : bonusPctIn;
   const sender = inputs.payer === "sender";
   const senderPlus1 = sender && couponPct <= 0 && bonusPct <= 0;
-  const intlPp = usdCard ? INTL_CARD_PP : 0;
-  const chargePct = (inputs.tariff || 0) + intlPp + (senderPlus1 ? SENDER_NO_PROMO_PP : 0);
+  const intlPp = usdCard ? FEES.intlCardExtraPp : 0;
+  const chargePct =
+    (inputs.tariff || 0) + intlPp + (senderPlus1 ? FEES.senderNoPromoPp : 0);
   const serviceCharge = calculateServiceCharge(sum, chargePct);
   const toPay = calculateToPay({
     sum,
@@ -200,7 +184,7 @@ export function observedMargin(params: {
   toPay: number;
   paymentSystem: string;
 }): number {
-  const rate = ACQUIRER_RATES[params.paymentSystem] ?? 0;
+  const rate = acquirerRate(params.paymentSystem);
   if (FX_PAYMENT_SYSTEMS.has(params.paymentSystem)) {
     return params.commission + params.coupon + params.styling;
   }

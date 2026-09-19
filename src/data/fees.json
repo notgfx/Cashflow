@@ -1,0 +1,42 @@
+{
+  "acquirerRates": {
+    "fsbp": 0.012,
+    "fcard": 0.032,
+    "fcardusd": 0.085,
+    "fusdt": 0,
+    "fethereum": 0,
+    "flitecoin": 0,
+    "fbitcoin": 0,
+    "ffreekassa": 0,
+    "dppaypal": 0
+  },
+  "fxPaymentSystems": [
+    "fcardusd",
+    "fusdt",
+    "fethereum",
+    "flitecoin",
+    "fbitcoin"
+  ],
+  "fxUnitLabels": {
+    "fcardusd": "USD",
+    "fusdt": "USDT"
+  },
+  "fxUnitLabelFallback": "исходная валюта",
+  "intlCardPaymentSystem": "fcardusd",
+  "acquirerFromRubGrossWhenCurrenciesDiffer": ["fcardusd"],
+  "intlCardExtraPp": 10,
+  "senderNoPromoPp": 1,
+  "shareBuckets": [0, 10, 20, 25, 50, 79],
+  "shareBucketTolerance": 1.5,
+  "defaults": {
+    "paymentSystem": "fsbp",
+    "tariff": 7,
+    "couponPct": 10,
+    "bonusPct": 10
+  },
+  "autoStyling": {
+    "rate": 0.1,
+    "min": 10,
+    "max": 5000
+  }
+}

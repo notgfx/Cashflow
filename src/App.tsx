@@ -12,7 +12,7 @@ import { MismatchNotice } from "@/components/payment/MismatchNotice";
 import { PaymentFlow } from "@/components/payment/PaymentFlow";
 import { analyzePayment, exampleSnapshot, ingestPayment } from "@/lib/input";
 import { loadSession, saveSession } from "@/lib/storage";
-import { formatRate } from "@/lib/formatters";
+import { formatPercent, formatRate } from "@/lib/formatters";
 import type { InputError, ManualInputs as ManualValues, PaymentSnapshot } from "@/types/payment";
 
 function readFile(file: File): Promise<string> {
@@ -169,7 +169,7 @@ useEffect(() => {
           ) : null}
           {analysis.calculation.acquirerFromRubGross ? (
             <p className="mx-auto max-w-5xl px-4 pt-2 text-sm text-muted-foreground">
-              Для иностранной карты эквайер считается как 8.5% от рублёвой суммы с наценкой сервиса: поле «к оплате» в JSON может быть не в рублях.
+              Для иностранной карты эквайер считается как {formatPercent(analysis.calculation.acquirerRate * 100)} от рублёвой суммы с наценкой сервиса: поле «к оплате» в JSON может быть не в рублях.
             </p>
           ) : null}
           <PaymentFlow analysis={analysis} />

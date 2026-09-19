@@ -1,11 +1,12 @@
 import examplePayment from "@/data/example-payment.json";
 import {
   calculatePayment,
-  FX_PAYMENT_SYSTEMS,
   moneyRound,
   observedMargin,
   snapSharePct,
+  autoStyling,
 } from "@/lib/calculations";
+import { FEES, FX_PAYMENT_SYSTEMS, fxUnitLabel, isIntlCard } from "@/lib/fees";
 import {
   asPaymentSystem,
   isRecord,
@@ -82,12 +83,7 @@ function inferExchangeRate(params: {
     params.hiddenAmount === null;
   if (rubLooksSameCurrency) return null;
 
-  const unitLabel =
-    params.paymentSystem === "fcardusd"
-      ? "USD"
-      : params.paymentSystem === "fusdt"
-        ? "USDT"
-        : "исходная валюта";
+  const unitLabel = fxUnitLabel(params.paymentSystem);
 
   return {
     rate: params.sum / foreign,
@@ -102,11 +98,11 @@ function defaultManual(): ManualInputs {
     sum: 0,
     stylingMode: "off",
     stylingCustom: 0,
-    paymentSystem: "fsbp",
+    paymentSystem: FEES.defaults.paymentSystem as ManualInputs["paymentSystem"],
     payer: "recipient",
-    tariff: 7,
-    couponPct: 10,
-    bonusPct: 10,
+    tariff: FEES.defaults.tariff,
+    couponPct: FEES.defaults.couponPct,
+    bonusPct: FEES.defaults.bonusPct,
   };
 }
 
@@ -118,10 +114,10 @@ function inferManual(observed: ObservedPayment): { inputs: ManualInputs; tariffF
   const commission = observed.commission ?? 0;
   const toPay = observed.toPay ?? observed.sum;
   const payer = observed.payerHint ?? "recipient";
-  const usd = ps === "fcardusd";
+  const usd = isIntlCard(ps);
 
   let tariffFromJson = false;
-  let tariff = 7;
+  let tariff = FEES.defaults.tariff;
   let couponPct = 0;
   let bonusPct = 0;
 
@@ -139,11 +135,13 @@ function inferManual(observed: ObservedPayment): { inputs: ManualInputs; tariffF
     const cpForPlus = usd ? 0 : couponPct;
     const bpForPlus = usd ? 0 : bonusPct;
     const plus1 = payer === "sender" && cpForPlus <= 0 && bpForPlus <= 0;
-    tariff = moneyRound(chargePct - (usd ? 10 : 0) - (plus1 ? 1 : 0));
+    tariff = moneyRound(
+      chargePct - (usd ? FEES.intlCardExtraPp : 0) - (plus1 ? FEES.senderNoPromoPp : 0),
+    );
     tariffFromJson = true;
   }
 
-  const auto = observed.sum > 0 ? Math.min(Math.max(observed.sum * 0.1, 10), 5000) : 0;
+  const auto = autoStyling(observed.sum);
   let stylingMode: ManualInputs["stylingMode"] = "off";
   if (styling > 0 && Math.abs(styling - auto) < 0.02) stylingMode = "auto";
   else if (styling > 0) stylingMode = "custom";

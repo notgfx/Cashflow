@@ -1,5 +1,6 @@
 import type { ManualInputs, PaymentCalculation } from "@/types/payment";
 import { formatCurrency, formatPercent } from "@/lib/formatters";
+import { FEES } from "@/lib/fees";
 import { paymentSystemLabel } from "@/lib/labels";
 
 export function formulaToPay(calc: PaymentCalculation): string {
@@ -51,7 +52,8 @@ export function formulaToCash(calc: PaymentCalculation): string {
 export function formulaCharge(calc: PaymentCalculation): string {
   const extras: string[] = [];
   if (calc.intlPp) extras.push(`+ ${calc.intlPp} п.п. иностранная карта`);
-  if (calc.senderPlus1) extras.push("+ 1 п.п. отправитель без купона и реферала");
+  if (calc.senderPlus1)
+    extras.push(`+ ${FEES.senderNoPromoPp} п.п. отправитель без купона и реферала`);
   const extra = extras.length ? ` ${extras.join(" ")}` : "";
   return `${formatPercent(calc.tariff)}${extra} = ${formatPercent(calc.chargePct)}`;
 }
