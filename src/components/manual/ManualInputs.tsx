@@ -20,7 +20,7 @@ function PromoOffNote({ active }: { active: boolean }) {
     <p
       className={cn(
         "flex items-center gap-1 text-xs text-muted-foreground",
-        !active && "invisible",
+        !active && "pointer-events-none opacity-0",
       )}
       aria-hidden={!active}
     >
@@ -175,7 +175,7 @@ export function ManualInputs({ value, tariffFromJson, onChange }: ManualInputsPr
             <p
               className={cn(
                 "flex items-start gap-1.5 text-xs text-muted-foreground",
-                !value.commissionByUser && "invisible",
+                !value.commissionByUser && "pointer-events-none opacity-0",
               )}
               aria-hidden={!value.commissionByUser}
             >

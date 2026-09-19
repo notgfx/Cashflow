@@ -28,7 +28,7 @@ export function CommissionByUserHeart({
   if (!interactive) {
     return (
       <span
-        className={cn("inline-flex items-center", className)}
+        className={cn("inline-flex size-4 shrink-0 items-center justify-center", className)}
         title={active ? COMMISSION_BY_USER_LABEL : undefined}
       >
         {heart}
@@ -43,9 +43,12 @@ export function CommissionByUserHeart({
       aria-checked={active}
       aria-label={COMMISSION_BY_USER_LABEL}
       title={COMMISSION_BY_USER_LABEL}
+      onMouseDown={(event) => event.preventDefault()}
       onClick={onToggle}
       className={cn(
-        "inline-flex items-center justify-center rounded-sm p-0.5 hover:bg-accent",
+        "inline-flex size-4 shrink-0 items-center justify-center rounded-sm",
+        "hover:bg-accent focus-visible:bg-accent",
+        "outline-none focus-visible:outline-none",
         className,
       )}
     >
